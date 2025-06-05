@@ -1,11 +1,47 @@
-# from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Body
+from pydantic import BaseModel, Field
+from app.services import cvm_service, ai_service
 
-# router = APIRouter()
+router = APIRouter()
 
-# @router.post("/")
-# async def generate_report_request():
-#     # Lógica para solicitar a geração de um novo relatório
-#     return {"message": "Report generation requested"}
+class ReportRequest(BaseModel):
+    cnpj: str = Field(..., description="CNPJ da empresa no formato XX.XXX.XXX/XXXX-XX", regex=r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$")
+    year: int = Field(..., description="Ano do relatório", ge=2010)
+    doc_type: str = Field(..., description="Tipo de documento (ITR ou FRE)", regex="^(ITR|FRE|itr|fre)$")
+
+@router.post(
+    "/generate",
+    summary="Gera um relatório de análise fundamentalista usando IA",
+    response_description="O relatório de análise gerado"
+)
+def generate_report(request: ReportRequest):
+    """
+    Gera uma análise fundamentalista completa para uma empresa, utilizando os dados
+    da CVM e um modelo de linguagem avançado.
+    """
+    # 1. Obter os dados financeiros usando o cvm_service
+    financial_data = cvm_service.get_financial_statements(
+        doc_type=request.doc_type.upper(),
+        year=request.year,
+        cnpj=request.cnpj
+    )
+
+    if not financial_data:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Não foi possível encontrar dados financeiros para o CNPJ {request.cnpj} para {request.doc_type.upper()} de {request.year}."
+        )
+
+    # 2. Gerar a análise usando o ai_service
+    analysis_report = ai_service.generate_financial_analysis(financial_data)
+
+    if not analysis_report:
+        raise HTTPException(
+            status_code=500,
+            detail="Ocorreu um erro no serviço de IA ao tentar gerar a análise."
+        )
+
+    return {"company_cnpj": request.cnpj, "year": request.year, "report": analysis_report}
 
 # @router.get("/{report_id}")
 # async def get_generated_report(report_id: str):

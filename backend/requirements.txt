@@ -15,4 +15,6 @@ python-dotenv
 # google-generativeai (se usar API do Gemini)
 requests
 beautifulsoup4
-pandas 
+pandas
+# openai # Comentado, pode ser removido depois
+google-generativeai 

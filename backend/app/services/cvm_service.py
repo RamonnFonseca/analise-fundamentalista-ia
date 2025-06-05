@@ -4,6 +4,7 @@ import os # Adicionado para manipulação de caminhos e diretórios
 import zipfile # Adicionado para manipulação de arquivos ZIP
 from io import BytesIO # Adicionado para manipular o ZIP em memória
 import pandas as pd # Adicionado pandas
+from typing import Dict, List, Literal # Adicionado
 # from ..core.config import settings # Para buscar CVM_BASE_URL de configurações
 
 # Lógica de negócios para buscar, baixar e processar inicialmente
@@ -16,6 +17,15 @@ import pandas as pd # Adicionado pandas
 # Lembre-se de adicionar CVM_BASE_URL="https://dados.cvm.gov.br/dados/" ao seu .env e .env.example
 CVM_API_BASE_URL = "https://dados.cvm.gov.br/dados/" # Exemplo
 DEFAULT_DOWNLOAD_PATH = os.path.join("data", "raw_cvm_files") # Caminho padrão para downloads
+
+# Mapeamento dos nomes das demonstrações para seus arquivos correspondentes (versão CONSOLIDADA)
+# Adicionaremos mais conforme necessário
+STATEMENT_FILES_MAP = {
+    "BPA": "{doc_type}_cia_aberta_BPA_con_{year}.csv", # Balanço Patrimonial Ativo
+    "BPP": "{doc_type}_cia_aberta_BPP_con_{year}.csv", # Balanço Patrimonial Passivo
+    "DRE": "{doc_type}_cia_aberta_DRE_con_{year}.csv", # Demonstração do Resultado
+    "DFC_MI": "{doc_type}_cia_aberta_DFC_MI_con_{year}.csv", # Fluxo de Caixa (Método Indireto)
+}
 
 def fetch_cvm_data(endpoint: str):
     """
@@ -182,6 +192,85 @@ def read_cvm_csv(csv_file_path: str) -> pd.DataFrame | None:
     except Exception as e:
         print(f"Ocorreu um erro ao ler o arquivo CSV {csv_file_path}: {e}")
     return None
+
+def get_financial_statements(
+    doc_type: Literal["ITR", "FRE"],
+    year: int,
+    cnpj: str,
+    statements: List[str] = None
+) -> Dict[str, pd.DataFrame]:
+    """
+    Busca e processa as demonstrações financeiras de uma empresa específica.
+
+    Args:
+        doc_type: "ITR" ou "FRE".
+        year: Ano do relatório.
+        cnpj: CNPJ da empresa (formatado: "XX.XXX.XXX/XXXX-XX").
+        statements: Lista de demonstrações a serem buscadas (ex: ["BPA", "DRE"]).
+                    Se None, busca todas as mapeadas em STATEMENT_FILES_MAP.
+
+    Returns:
+        Um dicionário onde as chaves são os nomes das demonstrações (ex: "BPA")
+        e os valores são os DataFrames do pandas com os dados da empresa.
+    """
+    print(f"Buscando demonstrações para CNPJ {cnpj}, Ano {year}, Tipo {doc_type}")
+
+    # Garante que os arquivos para o ano/tipo existem, se não, baixa-os.
+    doc_type_lower = doc_type.lower()
+    year_path = os.path.join(DEFAULT_DOWNLOAD_PATH, doc_type, str(year))
+    if not os.path.exists(year_path):
+        print(f"Dados para {doc_type}/{year} não encontrados localmente. Tentando baixar...")
+        # Lógica para encontrar o nome do zip e baixar (simplificado por enquanto)
+        available_files = list_available_zip_files(doc_type)
+        zip_to_download = next((f for f in available_files if str(year) in f), None)
+        if not zip_to_download:
+            print(f"Não foi possível encontrar o arquivo .zip para {doc_type}/{year} no site da CVM.")
+            return {}
+        
+        download_and_unzip_cvm_file(doc_type, zip_to_download)
+
+    if statements is None:
+        statements_to_fetch = list(STATEMENT_FILES_MAP.keys())
+    else:
+        statements_to_fetch = statements
+
+    company_statements = {}
+
+    for stmt_key in statements_to_fetch:
+        if stmt_key not in STATEMENT_FILES_MAP:
+            print(f"Aviso: Demonstração '{stmt_key}' não é conhecida. Ignorando.")
+            continue
+
+        file_pattern = STATEMENT_FILES_MAP[stmt_key]
+        csv_filename = file_pattern.format(doc_type=doc_type_lower, year=year)
+        csv_path = os.path.join(year_path, csv_filename)
+
+        if not os.path.exists(csv_path):
+            print(f"Aviso: Arquivo {csv_filename} não encontrado em {year_path}. Ignorando demonstração '{stmt_key}'.")
+            continue
+
+        # Ler o CSV completo
+        full_df = read_cvm_csv(csv_path)
+        if full_df is None:
+            continue
+
+        # Filtrar pelo CNPJ da empresa
+        # O CNPJ do usuário (validado pela API) é comparado diretamente com a coluna do CSV.
+        company_df = full_df[full_df['CNPJ_CIA'] == cnpj].copy()
+        
+        if company_df.empty:
+            print(f"Nenhum dado encontrado para o CNPJ {cnpj} no arquivo {csv_filename}.")
+            continue
+
+        # TODO: Adicionar lógica mais sofisticada de filtragem
+        # - Pegar a última VERSAO
+        # - Tratar as datas (DT_FIM_EXERC)
+        # - Pivotar a tabela para um formato mais legível
+
+        print(f"Dados para a demonstração '{stmt_key}' encontrados. {len(company_df)} linhas.")
+        company_statements[stmt_key] = company_df
+
+    return company_statements
 
 # Exemplo de como poderia ser usado (para teste local):
 # if __name__ == '__main__':

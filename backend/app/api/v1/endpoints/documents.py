@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, HTTPException, Path, Query
 from typing import List
 from app.services import cvm_service
 
@@ -51,6 +51,35 @@ def process_cvm_documents_by_year(
         )
 
     return {"message": "Processamento concluído com sucesso.", "extracted_path": extracted_path}
+
+@router.get(
+    "/companies/{cnpj:path}/statements/{doc_type}/{year}",
+    summary="Obtém demonstrações financeiras de uma empresa",
+    response_description="Dicionário com as demonstrações financeiras em formato JSON"
+)
+def get_company_statements(
+    cnpj: str = Path(..., title="CNPJ da Empresa", description="CNPJ formatado: XX.XXX.XXX/XXXX-XX", regex=r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"),
+    doc_type: str = Path(..., title="Tipo de Documento", description="ITR ou FRE", regex="^(ITR|FRE|itr|fre)$"),
+    year: int = Path(..., title="Ano do documento", ge=2010),
+    statements: List[str] = Query(None, title="Lista de Demonstrações", description="Ex: BPA, DRE, DFC_MI")
+):
+    """
+    Busca, processa e retorna as demonstrações financeiras para uma empresa específica.
+    """
+    doc_type_upper = doc_type.upper()
+    
+    result_dfs = cvm_service.get_financial_statements(doc_type_upper, year, cnpj, statements)
+
+    if not result_dfs:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Nenhum dado encontrado para o CNPJ {cnpj} para {doc_type_upper} de {year}."
+        )
+
+    # Converte os dataframes para JSON. O formato 'records' cria uma lista de objetos.
+    json_output = {key: df.to_dict(orient='records') for key, df in result_dfs.items()}
+    
+    return json_output
 
 # @router.get("/{document_id}")
 # async def get_document_status(document_id: str):
