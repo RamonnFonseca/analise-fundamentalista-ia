@@ -95,6 +95,7 @@ celerybeat.pid
 .sage/
 
 # Environments
+.env.example
 .env
 .venv
 env/
