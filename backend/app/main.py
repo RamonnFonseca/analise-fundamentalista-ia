@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.api.v1 import api_router
 
 app = FastAPI(
     title="API de Análise Fundamentalista CVM",
@@ -11,8 +12,7 @@ async def read_root():
     return {"message": "Bem-vindo à API de Análise Fundamentalista CVM!"}
 
 # Aqui registraremos os routers da API v1 posteriormente
-# from app.api.v1 import api_router
-# app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router, prefix="/api/v1")
 
 if __name__ == "__main__":
     import uvicorn

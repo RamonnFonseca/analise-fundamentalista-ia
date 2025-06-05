@@ -184,44 +184,44 @@ def read_cvm_csv(csv_file_path: str) -> pd.DataFrame | None:
     return None
 
 # Exemplo de como poderia ser usado (para teste local):
-if __name__ == '__main__':
-    # Teste 1: Listar arquivos ITR
-    print("\n--- Testando list_available_zip_files para ITR ---")
-    itr_zip_files = list_available_zip_files("ITR")
-    if itr_zip_files:
-        print(f"Arquivos ITR .zip encontrados ({len(itr_zip_files)}):")
-        print(f"  Primeiros 2: {itr_zip_files[:2]}...")
-    else:
-        print("Nenhum arquivo ITR .zip encontrado.")
+# if __name__ == '__main__':
+#     # Teste 1: Listar arquivos ITR
+#     print("\n--- Testando list_available_zip_files para ITR ---")
+#     itr_zip_files = list_available_zip_files("ITR")
+#     if itr_zip_files:
+#         print(f"Arquivos ITR .zip encontrados ({len(itr_zip_files)}):")
+#         print(f"  Primeiros 2: {itr_zip_files[:2]}...")
+#     else:
+#         print("Nenhum arquivo ITR .zip encontrado.")
 
-    # Teste 2: Baixar e descompactar o primeiro arquivo ITR listado (se houver)
-    extracted_path_for_csv_test = None
-    if itr_zip_files:
-        first_itr_zip = itr_zip_files[0] # Pega o mais antigo
-        print(f"\n--- Testando download_and_unzip_cvm_file para: {first_itr_zip} ---")
-        extracted_path_for_csv_test = download_and_unzip_cvm_file("ITR", first_itr_zip)
-        if extracted_path_for_csv_test:
-            print(f"Arquivos de {first_itr_zip} extraídos para: {extracted_path_for_csv_test}")
-        else:
-            print(f"Falha ao baixar e descompactar {first_itr_zip}.")
-    else:
-        print("\nSkipping download test: Nenhum arquivo ITR encontrado para baixar.")
+#     # Teste 2: Baixar e descompactar o primeiro arquivo ITR listado (se houver)
+#     extracted_path_for_csv_test = None
+#     if itr_zip_files:
+#         first_itr_zip = itr_zip_files[0] # Pega o mais antigo
+#         print(f"\n--- Testando download_and_unzip_cvm_file para: {first_itr_zip} ---")
+#         extracted_path_for_csv_test = download_and_unzip_cvm_file("ITR", first_itr_zip)
+#         if extracted_path_for_csv_test:
+#             print(f"Arquivos de {first_itr_zip} extraídos para: {extracted_path_for_csv_test}")
+#         else:
+#             print(f"Falha ao baixar e descompactar {first_itr_zip}.")
+#     else:
+#         print("\nSkipping download test: Nenhum arquivo ITR encontrado para baixar.")
 
-    # Teste 3: Ler um arquivo CSV específico do diretório extraído
-    if extracted_path_for_csv_test:
-        year_from_zip = "".join(filter(str.isdigit, first_itr_zip))[:4] if itr_zip_files else "unknown_year"
-        target_csv_name = f"itr_cia_aberta_BPA_con_{year_from_zip}.csv"
-        full_csv_path = os.path.join(extracted_path_for_csv_test, target_csv_name)
+#     # Teste 3: Ler um arquivo CSV específico do diretório extraído
+#     if extracted_path_for_csv_test:
+#         year_from_zip = "".join(filter(str.isdigit, first_itr_zip))[:4] if itr_zip_files else "unknown_year"
+#         target_csv_name = f"itr_cia_aberta_BPA_con_{year_from_zip}.csv"
+#         full_csv_path = os.path.join(extracted_path_for_csv_test, target_csv_name)
 
-        print(f"\n--- Testando read_cvm_csv para: {full_csv_path} ---")
-        df_cvm = read_cvm_csv(full_csv_path)
+#         print(f"\n--- Testando read_cvm_csv para: {full_csv_path} ---")
+#         df_cvm = read_cvm_csv(full_csv_path)
 
-        if df_cvm is not None:
-            print(f"\nInformações sobre o DataFrame de {target_csv_name}:")
-            df_cvm.info()
-            print(f"\nPrimeiras 5 linhas do DataFrame de {target_csv_name}:")
-            print(df_cvm.head())
-        else:
-            print(f"Falha ao ler o arquivo CSV: {target_csv_name}")
-    else:
-        print("\nSkipping CSV reading test: Caminho de extração não disponível ou falha no download/unzip.") 
+#         if df_cvm is not None:
+#             print(f"\nInformações sobre o DataFrame de {target_csv_name}:")
+#             df_cvm.info()
+#             print(f"\nPrimeiras 5 linhas do DataFrame de {target_csv_name}:")
+#             print(df_cvm.head())
+#         else:
+#             print(f"Falha ao ler o arquivo CSV: {target_csv_name}")
+#     else:
+#         print("\nSkipping CSV reading test: Caminho de extração não disponível ou falha no download/unzip.") 
