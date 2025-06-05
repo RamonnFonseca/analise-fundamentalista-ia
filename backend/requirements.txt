@@ -1,0 +1,18 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+# Adicionar outras dependências conforme necessário:
+# SQLAlchemy (para ORM, se usar DB relacional)
+# psycopg2-binary (para PostgreSQL)
+# pymysql (para MySQL)
+# requests (para chamadas HTTP a CVM ou APIs de IA)
+# beautifulsoup4 (para parsing de HTML, se necessário)
+# lxml (para parsing de XML, se necessário)
+# pdfminer.six (para extração de texto de PDFs)
+# matplotlib / plotly (para gráficos, se gerados no backend)
+# openai (se usar API da OpenAI)
+# google-generativeai (se usar API do Gemini)
+requests
+beautifulsoup4
+pandas 
