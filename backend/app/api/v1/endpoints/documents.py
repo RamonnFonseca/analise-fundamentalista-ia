@@ -10,8 +10,8 @@ router = APIRouter()
     response_description="Caminho do diretório onde os arquivos foram extraídos",
 )
 def process_cvm_documents_by_year(
-    doc_type: str = Path(..., title="Tipo de Documento", description="ITR ou FRE", regex="^(ITR|FRE|itr|fre)$"),
-    year: int = Path(..., title="Ano", description="Ano do documento a ser processado", ge=2010)
+    doc_type: str = Path(..., title="Tipo de Documento", description="ITR ou FRE", pattern="^(ITR|FRE|itr|fre)$"),
+    year: int = Path(..., title="Ano do documento a ser processado", ge=2010)
 ):
     """
     Inicia o processo de download e descompactação de um arquivo de dados da CVM.
@@ -58,8 +58,8 @@ def process_cvm_documents_by_year(
     response_description="Dicionário com as demonstrações financeiras em formato JSON"
 )
 def get_company_statements(
-    cnpj: str = Path(..., title="CNPJ da Empresa", description="CNPJ formatado: XX.XXX.XXX/XXXX-XX", regex=r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"),
-    doc_type: str = Path(..., title="Tipo de Documento", description="ITR ou FRE", regex="^(ITR|FRE|itr|fre)$"),
+    cnpj: str = Path(..., title="CNPJ da Empresa", description="CNPJ formatado: XX.XXX.XXX/XXXX-XX", pattern=r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"),
+    doc_type: str = Path(..., title="Tipo de Documento", description="ITR ou FRE", pattern="^(ITR|FRE|itr|fre)$"),
     year: int = Path(..., title="Ano do documento", ge=2010),
     statements: List[str] = Query(None, title="Lista de Demonstrações", description="Ex: BPA, DRE, DFC_MI")
 ):

@@ -10,6 +10,7 @@
 # settings = Settings() 
 
 from pydantic_settings import BaseSettings
+from pydantic import HttpUrl
 
 class Settings(BaseSettings):
     APP_NAME: str = "Análise Fundamentalista API"
@@ -17,6 +18,11 @@ class Settings(BaseSettings):
     # Chave de API para o serviço do Google Gemini
     # Será lida da variável de ambiente GEMINI_API_KEY
     GEMINI_API_KEY: str
+
+    # Configurações adicionais lidas do .env
+    DEBUG: bool = False
+    ENVIRONMENT: str = "development"
+    CVM_API_BASE_URL: HttpUrl = "https://dados.cvm.gov.br/dados/"
 
     class Config:
         # O Pydantic irá procurar por um arquivo .env e carregar as variáveis dele

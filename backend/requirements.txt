@@ -17,4 +17,5 @@ requests
 beautifulsoup4
 pandas
 # openai # Comentado, pode ser removido depois
-google-generativeai 
+google-generativeai
+pydantic-settings 

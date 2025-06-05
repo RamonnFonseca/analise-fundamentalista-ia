@@ -5,9 +5,9 @@ from app.services import cvm_service, ai_service
 router = APIRouter()
 
 class ReportRequest(BaseModel):
-    cnpj: str = Field(..., description="CNPJ da empresa no formato XX.XXX.XXX/XXXX-XX", regex=r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$")
+    cnpj: str = Field(..., description="CNPJ da empresa no formato XX.XXX.XXX/XXXX-XX", pattern=r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$")
     year: int = Field(..., description="Ano do relatório", ge=2010)
-    doc_type: str = Field(..., description="Tipo de documento (ITR ou FRE)", regex="^(ITR|FRE|itr|fre)$")
+    doc_type: str = Field(..., description="Tipo de documento (ITR ou FRE)", pattern="^(ITR|FRE|itr|fre)$")
 
 @router.post(
     "/generate",

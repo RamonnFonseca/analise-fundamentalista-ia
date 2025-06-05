@@ -5,7 +5,7 @@ import zipfile # Adicionado para manipulação de arquivos ZIP
 from io import BytesIO # Adicionado para manipular o ZIP em memória
 import pandas as pd # Adicionado pandas
 from typing import Dict, List, Literal # Adicionado
-# from ..core.config import settings # Para buscar CVM_BASE_URL de configurações
+from app.core.config import settings # Importa as configurações centralizadas
 
 # Lógica de negócios para buscar, baixar e processar inicialmente
 # os documentos FRE e ITR da CVM.
@@ -33,7 +33,7 @@ def fetch_cvm_data(endpoint: str):
     Exemplo de endpoint: "CIA_ABERTA/DOC/IPE/DADOS/" para Informações Eventuais.
     Os dados de FRE e ITR geralmente são arquivos ZIP contendo CSVs.
     """
-    full_url = f"{CVM_API_BASE_URL}{endpoint.lstrip('/')}"
+    full_url = f"{settings.CVM_API_BASE_URL}{endpoint.lstrip('/')}"
     print(f"Buscando dados de texto/HTML de: {full_url}")
     try:
         response = requests.get(full_url, timeout=60) # Aumentado timeout para dados maiores
@@ -57,7 +57,7 @@ def download_cvm_file(file_url_segment: str) -> bytes | None:
     Returns:
         Os bytes do arquivo ou None em caso de erro.
     """
-    full_url = f"{CVM_API_BASE_URL}{file_url_segment.lstrip('/')}"
+    full_url = f"{settings.CVM_API_BASE_URL}{file_url_segment.lstrip('/')}"
     print(f"Baixando arquivo de: {full_url}")
     try:
         response = requests.get(full_url, timeout=300) # Timeout maior para downloads de arquivos
