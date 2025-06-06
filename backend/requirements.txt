@@ -18,4 +18,4 @@ beautifulsoup4
 pandas
 # openai # Comentado, pode ser removido depois
 google-generativeai
-pydantic-settings 
+pydantic-settings

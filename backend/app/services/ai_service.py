@@ -4,15 +4,17 @@
 # - Formatar a saída da IA para ser usada na geração de relatórios. 
 
 import json
+import re
 import google.generativeai as genai
+from google.generativeai.types import GenerationConfig
 from app.core.config import settings
-from typing import Dict
+from typing import Dict, Any
 import pandas as pd
 
 # Configura a biblioteca do Google com a chave de API das nossas configurações
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
-def generate_financial_analysis(company_financials: Dict[str, pd.DataFrame]) -> str | None:
+def generate_financial_analysis(company_financials: Dict[str, pd.DataFrame]) -> Dict[str, Any] | None:
     """
     Usa o Google Gemini Pro para gerar uma análise financeira a partir dos dados da empresa.
 
@@ -21,10 +23,10 @@ def generate_financial_analysis(company_financials: Dict[str, pd.DataFrame]) -> 
                             (ex: "BPA", "DRE") e os valores são DataFrames do pandas.
 
     Returns:
-        Uma string com a análise gerada pela IA, ou None em caso de erro.
+        Um dicionário com a análise gerada pela IA e dados financeiros, ou None em caso de erro.
     """
     try:
-        # 1. Converter os DataFrames para um formato JSON mais compacto e legível para a IA
+        # 1. Converter os DataFrames para um formato JSON legível para a IA
         financial_data_json = {}
         for statement, df in company_financials.items():
             df_filtered = df.loc[df.groupby('CD_CONTA')['VERSAO'].idxmax()]
@@ -34,30 +36,67 @@ def generate_financial_analysis(company_financials: Dict[str, pd.DataFrame]) -> 
 
         # 2. Construir o prompt para a IA
         prompt = """
-        Você é um analista financeiro sênior, especializado no mercado de ações brasileiro, trabalhando para um grande banco de investimentos como o BTG Pactual ou a XP Inc.
-        Seu objetivo é gerar um relatório de análise fundamentalista conciso, profissional e com insights valiosos para um cliente investidor.
-        A linguagem deve ser formal, direta e clara, como a usada em relatórios de mercado.
-        Baseado nos dados financeiros fornecidos em formato JSON a seguir, gere uma análise que cubra os seguintes pontos:
-        1.  **Visão Geral da Empresa:** Com base nos totais do balanço e resultado, faça um breve resumo da saúde financeira da empresa no período.
-        2.  **Análise do Balanço Patrimonial (BPA e BPP):** Comente sobre a estrutura de ativos e passivos. Destaque pontos importantes como níveis de caixa, endividamento (curto e longo prazo) e patrimônio líquido.
-        3.  **Análise da Demonstração de Resultado (DRE):** Analise a receita líquida, o lucro bruto e o lucro líquido. Comente sobre as margens (se possível calcular) e a eficiência operacional.
-        4.  **Conclusão e Pontos de Atenção:** Forneça um parágrafo final com sua conclusão sobre a situação da empresa e aponte 2-3 pontos de atenção (positivos ou negativos) que um investidor deve observar nos próximos trimestres.
+        Você é um analista financeiro sênior, especializado no mercado de ações brasileiro.
+        Seu trabalho é analisar dados financeiros e gerar um relatório conciso para investidores.
+        A linguagem deve ser formal, direta e clara.
 
-        Não inclua saudações ou despedidas. Vá direto ao ponto. A resposta deve ser apenas o texto da análise.
+        **Tarefa:**
+        Baseado nos dados financeiros em JSON fornecidos, gere uma resposta JSON contendo DUAS chaves:
+        1. "report": Uma string com a análise textual fundamentalista, seguindo a estrutura abaixo.
+        2. "financial_summary": Um objeto JSON com os valores numéricos exatos para os principais indicadores financeiros extraídos diretamente dos dados.
 
-        Dados Financeiros:
+        **Estrutura do Relatório Textual ("report"):**
+        1.  **Visão Geral da Empresa:** Resumo da saúde financeira.
+        2.  **Análise do Balanço Patrimonial (BPA e BPP):** Comente sobre ativos, passivos, endividamento e patrimônio líquido.
+        3.  **Análise da Demonstração de Resultado (DRE):** Analise receita líquida, lucro bruto e lucro líquido.
+        4.  **Conclusão e Pontos de Atenção:** Conclusão final e 2-3 pontos de atenção (positivos ou negativos).
+
+        **Estrutura do Resumo Financeiro ("financial_summary"):**
+        Extraia os seguintes valores dos dados e coloque-os neste objeto. Se um valor não estiver disponível, use 0.
+        - "Receita Liquida": valor
+        - "Lucro Bruto": valor
+        - "Lucro Liquido": valor
+        - "Ativo Total": valor
+        - "Passivo Total": valor
+        - "Patrimonio Liquido": valor
+
+        **Dados Financeiros:**
         {financial_data}
         """.format(financial_data=json.dumps(financial_data_json, indent=2, ensure_ascii=False))
 
-        # 3. Chamar a API do Google Gemini
-        print("Enviando dados para análise do Google Gemini Pro...")
+        # 3. Chamar a API do Google Gemini com configuração para JSON
+        print("Enviando dados para análise do Google Gemini Pro (modo JSON)...")
         model = genai.GenerativeModel('gemini-2.5-pro-preview-05-06')
-        response = model.generate_content(prompt)
         
-        analysis_content = response.text
-        print("Análise recebida do Gemini com sucesso.")
-        return analysis_content
+        # Forçar a saída em JSON de forma explícita
+        generation_config = GenerationConfig(response_mime_type="application/json")
+        
+        response = model.generate_content(prompt, generation_config=generation_config)
+        
+        # 4. Parsear a resposta JSON
+        # Com response_mime_type="application/json", response.text já é uma string JSON limpa
+        print("--- Gemini Response (JSON mode) ---")
+        print(response.text)
+        print("-----------------------------------")
+        
+        analysis_data = json.loads(response.text)
+        
+        print("Análise recebida e processada do Gemini com sucesso.")
+        return analysis_data
 
+    except json.JSONDecodeError as e:
+        print(f"Erro de decodificação JSON. A resposta da IA não é um JSON válido: {e}")
+        # 'response' pode não existir se o erro for anterior, então usamos locals().get
+        raw_response = locals().get("response", None)
+        if raw_response:
+            print("--- Resposta da IA que causou o erro ---")
+            print(raw_response.text)
+            print("--------------------------------------")
+        return None
     except Exception as e:
-        print(f"Ocorreu um erro ao gerar a análise com o Gemini: {e}")
+        print(f"Ocorreu um erro inesperado ao gerar a análise com o Gemini: {e}")
+        # Capturar e imprimir informações de 'response' se existirem, como 'prompt_feedback'
+        response_obj = locals().get("response", None)
+        if response_obj and hasattr(response_obj, 'prompt_feedback'):
+             print(f"Prompt Feedback: {response_obj.prompt_feedback}")
         return None 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from app.services import cvm_service, ai_service
 
@@ -11,8 +11,8 @@ class ReportRequest(BaseModel):
 
 @router.post(
     "/generate",
-    summary="Gera um relatório de análise fundamentalista usando IA",
-    response_description="O relatório de análise gerado"
+    summary="Gera um relatório de análise fundamentalista e dados financeiros estruturados",
+    response_description="Um JSON com a análise textual e um resumo financeiro"
 )
 def generate_report(request: ReportRequest):
     """
@@ -32,16 +32,21 @@ def generate_report(request: ReportRequest):
             detail=f"Não foi possível encontrar dados financeiros para o CNPJ {request.cnpj} para {request.doc_type.upper()} de {request.year}."
         )
 
-    # 2. Gerar a análise usando o ai_service
-    analysis_report = ai_service.generate_financial_analysis(financial_data)
+    # 2. Gerar a análise e os dados estruturados usando o ai_service
+    analysis_data = ai_service.generate_financial_analysis(financial_data)
 
-    if not analysis_report:
+    if not analysis_data or "report" not in analysis_data or "financial_summary" not in analysis_data:
         raise HTTPException(
             status_code=500,
             detail="Ocorreu um erro no serviço de IA ao tentar gerar a análise."
         )
 
-    return {"company_cnpj": request.cnpj, "year": request.year, "report": analysis_report}
+    return {
+        "company_cnpj": request.cnpj,
+        "year": request.year,
+        "report": analysis_data["report"],
+        "financial_summary": analysis_data["financial_summary"]
+    }
 
 # @router.get("/{report_id}")
 # async def get_generated_report(report_id: str):

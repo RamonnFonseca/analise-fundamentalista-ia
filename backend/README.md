@@ -1,69 +1,45 @@
 # Backend - Análise Fundamentalista com IA
 
-Este projeto é o backend responsável por:
+Este projeto é o backend responsável por orquestrar a coleta, análise e disponibilização de dados financeiros de empresas de capital aberto no Brasil.
 
-1.  Coletar documentos da CVM (FRE e ITR).
-2.  Processar os documentos utilizando inteligência artificial.
-3.  Gerar relatórios financeiros profissionais com gráficos.
+## Funcionalidades Principais
 
-## Estrutura do Projeto (Sugestão Inicial)
+1.  **Coleta de Dados da CVM:** Baixa e processa automaticamente as demonstrações financeiras (ITR e DFP) diretamente do [portal de dados abertos da CVM](https://dados.cvm.gov.br/).
+2.  **Análise com IA:** Utiliza o modelo de linguagem avançado do Google (Gemini) para gerar uma análise fundamentalista em texto, como se fosse redigida por um analista sênior.
+3.  **Dados Estruturados:** Fornece um resumo com os principais indicadores financeiros (Receita, Lucro, Ativos, etc.) em um formato JSON limpo, pronto para ser consumido.
+4.  **API RESTful:** Expõe um endpoint via FastAPI para que uma aplicação frontend possa solicitar e exibir os relatórios e os dados financeiros.
 
-```
-backend/
-├── app/                  # Contém a lógica principal da aplicação FastAPI
-│   ├── __init__.py
-│   ├── main.py           # Ponto de entrada da aplicação FastAPI
-│   ├── core/             # Configurações, middlewares, etc.
-│   │   ├── __init__.py
-│   │   └── config.py
-│   ├── api/              # Módulos da API (routers)
-│   │   ├── __init__.py
-│   │   └── v1/
-│   │       ├── __init__.py
-│   │       ├── endpoints/  # Endpoints específicos
-│   │       │   ├── __init__.py
-│   │       │   ├── documents.py
-│   │       │   └── reports.py
-│   │       └── schemas.py    # Modelos Pydantic para validação
-│   ├── services/         # Lógica de negócios
-│   │   ├── __init__.py
-│   │   ├── cvm_service.py
-│   │   ├── ai_service.py
-│   │   └── report_service.py
-│   ├── models/           # Modelos de banco de dados (ex: SQLAlchemy)
-│   │   └── __init__.py
-│   ├── crud/             # Operações CRUD com o banco de dados
-│   │   └── __init__.py
-│   └── utils/            # Funções utilitárias
-│       └── __init__.py
-├── tests/                # Testes unitários e de integração
-│   ├── __init__.py
-│   └── ...
-├── .env.example          # Exemplo de variáveis de ambiente
-├── .gitignore
-├── requirements.txt
-└── README.md
-```
+## Como Configurar e Rodar o Projeto
 
-## Como Configurar e Rodar (Exemplo)
+Siga os passos abaixo para executar o backend localmente.
 
-1.  **Clone o repositório** (se aplicável)
-2.  **Crie e ative um ambiente virtual:**
-    ```bash
+### 1. Pré-requisitos
+
+*   Python 3.9 ou superior
+*   Uma chave de API para o Google Gemini. Você pode obter uma no [Google AI Studio](https://aistudio.google.com/app/apikey).
+
+### 2. Configuração do Ambiente
+
+Primeiro, clone o repositório e navegue até a pasta do backend.
+
+**Crie e ative um ambiente virtual:**
+
+*   No Windows (PowerShell):
+    ```powershell
     python -m venv venv
-    source venv/bin/activate  # Linux/macOS
-    .\venv\Scripts\activate    # Windows
+    .\venv\Scripts\Activate.ps1
     ```
-3.  **Instale as dependências:**
+*   No Linux ou macOS:
     ```bash
-    pip install -r requirements.txt
+    python3 -m venv venv
+    source venv/bin/activate
     ```
-4.  **Configure as variáveis de ambiente:**
-    Copie `.env.example` para `.env` e preencha os valores necessários.
-5.  **Rode a aplicação:**
-    ```bash
-    uvicorn app.main:app --reload
-    ```
+    
+**Instale as dependências:**
+Com o ambiente virtual ativo, instale todas as bibliotecas necessárias.
+```bash
+pip install -r requirements.txt
+```
 
-Acesse a API em `http://127.0.0.1:8000`.
-A documentação interativa (Swagger UI) estará disponível em `http://127.0.0.1:8000/docs`. 
+**Configure as variáveis de ambiente:**
+Crie um arquivo chamado `.env` na pasta `backend` (você pode copiar o `.env.example`). Dentro do `.env`, adicione sua chave da API do Gemini:
