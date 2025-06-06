@@ -13,7 +13,8 @@ from pydantic_settings import BaseSettings
 from pydantic import HttpUrl
 
 class Settings(BaseSettings):
-    APP_NAME: str = "Análise Fundamentalista API"
+    PROJECT_NAME: str = "Análise Fundamentalista com IA API"
+    API_V1_STR: str = "/api/v1"
     
     # Chave de API para o serviço do Google Gemini
     # Será lida da variável de ambiente GEMINI_API_KEY
@@ -28,6 +29,7 @@ class Settings(BaseSettings):
         # O Pydantic irá procurar por um arquivo .env e carregar as variáveis dele
         env_file = ".env"
         env_file_encoding = 'utf-8'
+        extra = 'ignore'
 
 # Cria uma instância única das configurações que será usada em toda a aplicação
 settings = Settings() 
